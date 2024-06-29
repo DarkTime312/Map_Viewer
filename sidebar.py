@@ -5,9 +5,12 @@ from tkintermapview import TkinterMapView
 
 
 class SideBar(ctk.CTkFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, map_obj):
         super().__init__(master=parent)
         self.parent = parent
+        self.map_obj = map_obj
+
+        # Create sidebar widgets
         self.create_widgets()
 
     def create_widgets(self):
@@ -25,39 +28,40 @@ class SideBar(ctk.CTkFrame):
         terrain_img = ctk.CTkImage(Image.open(terrain_image_path))
         paint_img = ctk.CTkImage(Image.open(paint_image_path))
 
-        self.streets_button = ctk.CTkButton(self.buttons_frame,
-                                            text='',
-                                            image=street_img,
-                                            width=60,
-                                            height=30,
-                                            fg_color=BUTTON_COLOR,
-                                            hover_color=BUTTON_HOVER_COLOR,
-                                            command=lambda: self.change_map(MAIN_URL))
-        self.streets_button.grid(row=0, column=0)
-        self.terrain_button = ctk.CTkButton(self.buttons_frame,
-                                            text='',
-                                            image=terrain_img,
-                                            width=60,
-                                            height=30,
-                                            fg_color=BUTTON_COLOR,
-                                            hover_color=BUTTON_HOVER_COLOR,
-                                            command=lambda: self.change_map(TERRAIN_URL)
-                                            )
-        self.terrain_button.grid(row=0, column=1)
+        MapButtons(self.buttons_frame,
+                   image=street_img,
+                   row=0,
+                   col=0,
+                   command=lambda: self.change_map(MAIN_URL))
 
-        self.paint_button = ctk.CTkButton(self.buttons_frame,
-                                          text='',
-                                          image=paint_img,
-                                          width=60,
-                                          height=30,
-                                          fg_color=BUTTON_COLOR,
-                                          hover_color=BUTTON_HOVER_COLOR,
-                                          command=lambda: self.change_map(PAINT_URL)
-                                          )
-        self.paint_button.grid(row=0, column=2)
+        MapButtons(self.buttons_frame,
+                   image=terrain_img,
+                   row=0,
+                   col=1,
+                   command=lambda: self.change_map(TERRAIN_URL)
+                   )
+
+        MapButtons(self.buttons_frame,
+                   image=paint_img,
+                   row=0,
+                   col=2,
+                   command=lambda: self.change_map(PAINT_URL)
+                   )
 
     def change_map(self, map_):
-        self.parent.map_widget.set_tile_server(map_)
+        self.map_obj.set_tile_server(map_)
+
+
+class MapButtons(ctk.CTkButton):
+    def __init__(self, parent, row, col, **kwargs):
+        super().__init__(master=parent,
+                         text='',
+                         width=60,
+                         height=30,
+                         fg_color=BUTTON_COLOR,
+                         hover_color=BUTTON_HOVER_COLOR,
+                         **kwargs)
+        self.grid(row=row, column=col)
 
 
 class LocationFrame(ctk.CTkFrame):
@@ -89,8 +93,11 @@ class LocationFrame(ctk.CTkFrame):
                       ).place(relx=1, rely=0, anchor='ne')
 
     def go_to_place(self):
-        print(type(self.loc), self.loc)
+        # Go to saved location
         self.map_obj.set_position(*self.loc)
+        # reset the zoom level
+        self.map_obj.set_zoom(DEFAULT_ZOOM)
 
     def remove_frame(self):
-        self.pack_forget()
+        # If user pressed `x` remove the frame
+        self.destroy()
