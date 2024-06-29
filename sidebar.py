@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from PIL import Image
 from settings import *
+from tkintermapview import TkinterMapView
 
 
 class SideBar(ctk.CTkFrame):
@@ -55,5 +56,41 @@ class SideBar(ctk.CTkFrame):
                                           )
         self.paint_button.grid(row=0, column=2)
 
-    def change_map(self, map):
-        self.parent.map_widget.set_tile_server(map)
+    def change_map(self, map_):
+        self.parent.map_widget.set_tile_server(map_)
+
+
+class LocationFrame(ctk.CTkFrame):
+    def __init__(self, parent, label: str, loc: tuple, map_obj: TkinterMapView):
+        super().__init__(master=parent, height=30)
+        self.loc = loc
+        self.map_obj = map_obj
+
+        self.pack(fill='x')
+
+        ctk.CTkButton(self,
+                      text=label,
+                      command=self.go_to_place,
+                      anchor='w',
+                      fg_color='transparent',
+                      font=(TEXT_FONT, TEXT_SIZE),
+                      hover_color=HISTORY_HOVER_COLOR,
+                      text_color=TEXT_COLOR,
+                      ).place(relx=0, rely=0, anchor='nw')
+
+        ctk.CTkButton(self,
+                      text='x',
+                      command=self.remove_frame,
+                      fg_color='transparent',
+                      hover_color=HISTORY_HOVER_COLOR,
+                      width=10,
+                      font=(TEXT_FONT, TEXT_SIZE),
+                      text_color=TEXT_COLOR,
+                      ).place(relx=1, rely=0, anchor='ne')
+
+    def go_to_place(self):
+        print(type(self.loc), self.loc)
+        self.map_obj.set_position(*self.loc)
+
+    def remove_frame(self):
+        self.pack_forget()
