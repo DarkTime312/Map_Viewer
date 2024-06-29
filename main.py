@@ -1,9 +1,30 @@
 import customtkinter as ctk
-import geopy
 from tkintermapview import TkinterMapView
 import tkintermapview
 from sidebar import SideBar, LocationFrame
 from settings import *
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+
+
+def get_city_coordinates(city_name):
+    # Initialize Nominatim API
+    geolocator = Nominatim(user_agent="MyApp")
+
+    try:
+        # Make the API call
+        location = geolocator.geocode(city_name)
+
+        # Check if location is found
+        if location:
+            return location.latitude, location.longitude
+        else:
+            return None
+
+    except (GeocoderTimedOut, GeocoderServiceError) as e:
+        return 'Error'
+    except Exception as e:
+        return f"An unexpected error occurred: {str(e)}"
 
 
 class MapViewer(ctk.CTk):
@@ -35,7 +56,8 @@ class MapViewer(ctk.CTk):
 
     def search_address(self, _):
         entered_city_name: str = self.string_var.get()
-        city_coordinates: tuple | None = tkintermapview.convert_address_to_coordinates(entered_city_name)
+        # city_coordinates: tuple | None = tkintermapview.convert_address_to_coordinates(entered_city_name)
+        city_coordinates: tuple | None = get_city_coordinates(entered_city_name)
 
         if city_coordinates:  # If the address exists
             # Go to new coordinates
@@ -55,9 +77,6 @@ class MapViewer(ctk.CTk):
         else:  # If the name is wrong
             # Change the entry border and text color to indicate a wrong location
             self.change_entry_color()
-            # Debug prints
-            print(city_coordinates)
-            print('Doesn\'t exist')
 
     def reset_entry(self, *args):
         if self.entry_border_width != 0:
