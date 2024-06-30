@@ -48,8 +48,8 @@ class SideBar(ctk.CTkFrame):
                    command=lambda: self.change_map(PAINT_URL)
                    )
 
-    def change_map(self, map_):
-        self.map_obj.set_tile_server(map_)
+    def change_map(self, view_style: str):
+        self.map_obj.set_tile_server(view_style)
 
 
 class MapButtons(ctk.CTkButton):

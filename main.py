@@ -4,38 +4,33 @@ import tkintermapview
 from sidebar import SideBar, LocationFrame
 from settings import *
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 
-def get_city_coordinates(city_name):
+def get_city_coordinates(city_name: str) -> None | tuple:
     # Initialize Nominatim API
     geolocator = Nominatim(user_agent="MyApp")
 
-    try:
-        # Make the API call
-        location = geolocator.geocode(city_name)
+    # Make the API call
+    location = geolocator.geocode(city_name)
+    print(location)
 
-        # Check if location is found
-        if location:
-            return location.latitude, location.longitude
-        else:
-            return None
-
-    except (GeocoderTimedOut, GeocoderServiceError) as e:
-        return 'Error'
-    except Exception as e:
-        return f"An unexpected error occurred: {str(e)}"
+    # Check if location is found
+    if location:
+        return location.latitude, location.longitude
+    else:
+        return None
 
 
 class MapViewer(ctk.CTk):
     def __init__(self):
         super().__init__()
+        ctk.set_appearance_mode('light')
         # window setup
-        self.geometry('1200x800')
+        self.geometry('1200x800+100+50')
         self.title('Map')
         self.iconbitmap('map.ico')
         self.minsize(800, 600)
-        self.entry_border_width = 0
+        self.error = False
 
         self.map_widget = TkinterMapView(self)
         self.map_widget.place(relx=0.2, rely=0, relwidth=0.8, relheight=1, anchor='nw')
@@ -48,11 +43,14 @@ class MapViewer(ctk.CTk):
                                   fg_color=ENTRY_BG,
                                   corner_radius=0,
                                   font=(TEXT_FONT, TEXT_SIZE),
-                                  textvariable=self.string_var)
+                                  border_width=4,
+                                  border_color=ENTRY_BG,
+                                  textvariable=self.string_var,
+                                  text_color=TEXT_COLOR)
         self.entry.place(relx=0.6, rely=0.95, anchor='center')
 
         self.entry.bind('<Return>', self.search_address)
-        self.string_var.trace('w', self.reset_entry)
+        self.string_var.trace('w', lambda *args: self.change_entry_color(reset=True))
 
     def search_address(self, _):
         entered_city_name: str = self.string_var.get()
@@ -78,25 +76,33 @@ class MapViewer(ctk.CTk):
             # Change the entry border and text color to indicate a wrong location
             self.change_entry_color()
 
-    def reset_entry(self, *args):
-        if self.entry_border_width != 0:
-            self.change_entry_color(reset=True)
+    def change_entry_color(self, *args, reset=False):
+        def animate():
+            nonlocal color_index
 
-    def change_entry_color(self, reset=False):
+            hex_border: str = COLOR_RANGE[color_index]
+            hex_text: str = COLOR_RANGE[abs(color_index - 15)]
+
+            border_color: str = f'#F{hex_border * 2}'
+            text_color: str = f'#{hex_text}00'
+            print(text_color)
+
+            color_index -= 1
+            self.entry.configure(border_color=border_color,
+                                 text_color=text_color)
+            if color_index >= 0:
+                self.after(100, animate)
+
+        color_index: int = 15
+
         if reset:
-            self.entry_border_width = 0
-            self.entry.configure(border_width=0,
+            if self.error:
+                self.entry.configure(border_color=ENTRY_BG,
                                  text_color=TEXT_COLOR)
-        else:
-            self.entry_border_width += 1
-
-            self.entry.configure(border_color='red',
-                                 border_width=self.entry_border_width)
-            if self.entry_border_width < 5:
-                self.after(100, self.change_entry_color)
-            else:
-                # At the end change the color
-                self.entry.configure(text_color='red')
+                self.error = False
+        else:  # Error
+            animate()
+            self.error = True
 
 
 if __name__ == '__main__':
