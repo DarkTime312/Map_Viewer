@@ -95,8 +95,6 @@ class LocationFrame(ctk.CTkFrame):
     def go_to_place(self):
         # Go to saved location
         self.map_obj.set_position(*self.loc)
-        # reset the zoom level
-        self.map_obj.set_zoom(DEFAULT_ZOOM)
 
     def remove_frame(self):
         # If user pressed `x` remove the frame
